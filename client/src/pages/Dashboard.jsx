@@ -35,7 +35,8 @@ export default function Dashboard({ filter = "all" }) {
     return true;
   });
 
-  const firstName = currentUser.name.trim().split(" ")[0];
+  const fullName = currentUser?.fullname || currentUser?.name || "User";
+  const firstName = fullName.trim().split(" ")[0];
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
     day: "numeric",
@@ -43,7 +44,8 @@ export default function Dashboard({ filter = "all" }) {
   });
 
   const handleClearCompleted = () => {
-    if (window.confirm(`Delete ${completed} completed task(s)?`)) clearCompleted();
+    if (window.confirm(`Delete ${completed} completed task(s)?`))
+      clearCompleted();
   };
 
   return (
@@ -55,13 +57,28 @@ export default function Dashboard({ filter = "all" }) {
 
       <div className="row g-3 mb-3">
         <div className="col-12 col-md-4">
-          <StatCard label="Total tasks" value={total} icon="list" tone="total" />
+          <StatCard
+            label="Total tasks"
+            value={total}
+            icon="list"
+            tone="total"
+          />
         </div>
         <div className="col-6 col-md-4">
-          <StatCard label="Completed" value={completed} icon="checkCircle" tone="done" />
+          <StatCard
+            label="Completed"
+            value={completed}
+            icon="checkCircle"
+            tone="done"
+          />
         </div>
         <div className="col-6 col-md-4">
-          <StatCard label="Pending" value={pending} icon="clock" tone="pending" />
+          <StatCard
+            label="Pending"
+            value={pending}
+            icon="clock"
+            tone="pending"
+          />
         </div>
       </div>
 
@@ -89,7 +106,11 @@ export default function Dashboard({ filter = "all" }) {
         <div className="panel-head">
           <h2>{COPY[filter].title}</h2>
           {completed > 0 && (
-            <button type="button" className="button button-outline button-sm" onClick={handleClearCompleted}>
+            <button
+              type="button"
+              className="button button-outline button-sm"
+              onClick={handleClearCompleted}
+            >
               <Icon name="broom" size={16} />
               <span>Clear completed</span>
             </button>

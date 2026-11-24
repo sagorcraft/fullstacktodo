@@ -4,8 +4,12 @@ const app = express();
 const mongoose = require("mongoose");
 const cors = require("cors");
 const User = require("./models/userModel");
+const multer = require("multer");
+const path = require("path");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 app.use(cors());
 
 mongoose.connect(process.env.MONGODB_URL).then(() => {
@@ -48,10 +52,13 @@ app.post("/registration", async (req, res) => {
     });
   }
 
+  // hashed password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   let user = new User({
     fullname: fullname,
     email: email,
-    password: password,
+    password: hashedPassword,
   });
 
   await user.save();
@@ -65,13 +72,14 @@ app.post("/registration", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  //check require all fields
   if (!email || !password) {
     return res.status(400).json({
       success: false,
       message: "Email and password are required",
     });
   }
-
+  //Find user
   const user = await User.findOne({
     email: email.trim().toLowerCase(),
   });
@@ -83,17 +91,65 @@ app.post("/login", async (req, res) => {
     });
   }
 
-  if (user.password !== password) {
+  // Compare password
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
     return res.status(401).json({
       success: false,
-      message: "Invalid password",
+      message: "Invaild password",
     });
   }
 
-  res.status(200).json({
+  //Login successful
+  return res.status(200).json({
     success: true,
     message: "Login successful",
+    token: "dummy-token-" + user._id,
+    user: {
+      id: user._id,
+      name: user.fullname,
+      fullname: user.fullname,
+      email: user.email,
+    },
   });
+});
+
+// Multer Storage Configuration
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads");
+  },
+  filename: function (req, file, cb) {
+    {
+      cb(null, Date.now() + path.extname(file.originalname));
+    }
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// image upload API
+app.post("/upload", upload.single("profile"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload an image",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Image uploaded successfully",
+      file: req.file,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 });
 
 app.listen(PORT, () => {

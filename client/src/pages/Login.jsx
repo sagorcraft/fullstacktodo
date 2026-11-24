@@ -24,7 +24,7 @@ export default function Login() {
     setFormError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {
       email: validateEmail(form.email),
@@ -33,7 +33,7 @@ export default function Login() {
     setErrors(newErrors);
     if (newErrors.email || newErrors.password) return;
 
-    const result = login(form);
+    const result = await login(form);
     if (!result.ok) {
       setFormError(result.error);
       return;
